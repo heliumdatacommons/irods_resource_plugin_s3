@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR) #CPACK_DEBIAN_<COMPONENT>_PACKAGE_NAME
 
-find_package(IRODS 4.2.2 EXACT REQUIRED)
+option(USING_AWS_SDK_CPP "Required for the ASSUME_ROLE_FUNCTIONALITY" OFF)
+
+if (USING_AWS_SDK_CPP)
+   message ("will link the AWS_SDK_CPP")
+   link_directories(/usr/local/lib)
+else()
+   message ("AWS_SDK_CPP not required")
+endif()
+
+
+find_package(IRODS 4.2.3 EXACT REQUIRED)
 
 if (NOT IRODS_EXTERNALS_PACKAGE_ROOT)
   set(IRODS_EXTERNALS_PACKAGE_ROOT "/opt/irods-externals" CACHE STRING "Choose the location of iRODS external packages." FORCE)
@@ -34,7 +44,7 @@ project(irods-s3 C CXX)
 include(${IRODS_TARGETS_PATH})
 
 set(IRODS_PLUGIN_VERSION_MAJOR "2")
-set(IRODS_PLUGIN_VERSION_MINOR "2")
+set(IRODS_PLUGIN_VERSION_MINOR "3")
 set(IRODS_PLUGIN_VERSION_PATCH "0")
 set(IRODS_PLUGIN_VERSION "${IRODS_PLUGIN_VERSION_MAJOR}.${IRODS_PLUGIN_VERSION_MINOR}.${IRODS_PLUGIN_VERSION_PATCH}")
 
@@ -85,7 +95,17 @@ target_link_libraries(
   ${IRODS_EXTERNALS_FULLPATH_S3}/lib/libs3.so
   ${OPENSSL_CRYPTO_LIBRARY}
   )
+
 target_compile_definitions(irods_s3_plugin PRIVATE RODS_SERVER ${IRODS_COMPILE_DEFINITIONS} BOOST_SYSTEM_NO_DEPRECATED)
+
+if (USING_AWS_SDK_CPP)
+   message ("adding libs for AWS_SDK_CPP")
+   target_link_libraries(irods_s3_plugin PRIVATE aws-cpp-sdk-core aws-cpp-sdk-sts)
+
+   message ("adding define of USING_AWS_SDK_CPP")
+   target_compile_definitions(irods_s3_plugin PRIVATE USING_AWS_SDK_CPP)
+endif()
+
 set_property(TARGET irods_s3_plugin PROPERTY CXX_STANDARD ${IRODS_CXX_STANDARD})
 set_property(TARGET irods_s3_plugin PROPERTY OUTPUT_NAME s3)
 install(

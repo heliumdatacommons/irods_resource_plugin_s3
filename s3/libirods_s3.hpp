@@ -7,6 +7,11 @@
 #include <rodsDef.h>
 #include <libs3.h>
 
+#ifdef USING_AWS_SDK_CPP
+#define S3_ASSUME_ROLE_FILE "s3AssumeRole"
+#endif
+
+
 #define S3_AUTH_FILE "s3Auth"
 #define ARCHIVE_NAMING_POLICY_KW    "ARCHIVE_NAMING_POLICY"
 #define CONSISTENT_NAMING           "consistent"
