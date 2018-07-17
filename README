@@ -40,6 +40,26 @@ S3_ENABLE_MD5=[0|1]  (default is 0, off)
 
 S3 server side encryption can be enabled using the parameter S3_SERVER_ENCRYPT=[0|1] (default=0=off).  This is not the same as HTTPS, and implies that the data will be stored on disk encrypted.  To encrypt during the network transport to S3, please use S3_PROTO=HTTPS (the default)
 
+Using this plugin with the AWS assume role (ARN) functionality (AWS only)
+--------------------------------------------
+
+AWS allows a resource owner to provide access to objects in a bucket by mapping account numbers to each other using STS acces policies.  Once these policies are in place one user can access objects from another account. For a specific example of this see https://docs.google.com/document/d/1z_WZFmc2mqPqF5hAadB1a3Nhw4dn9-c47XxIjR5-SDw.  The iRODS s3 driver has been enhanced to take advantage of this functionality. To use this functionality, follow these steps:
+
+* Download or build the AWS SDK. The package should be part of the irods externals repository.
+* Download the S3 driver from the helium repo: git clone https://github.com/heliumdatacommons/irods_resource_plugin_s3.git
+* Build the package: cd download dir; mkdir build && cd build; /opt/irods-externals/clang3.8-0/bin/clang/cmake -DCMAKE_C_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang -DCMAKE_CXX_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang++ -DCMAKE_CXX_FLAGS=-std=c++14 -DUSING_AWS_SDK_CPP:boolean=true ..; make package
+* install the package using rpm or dpkg as appropriate
+* Configure a compound resource to access the target bucket.  Here's an example of how to configure the archive resource
+
+iadmin mkresc AWSCloudArchive-ARN-test s3 ip-172-31-43-128.ec2.internal:nih-nhgri-datacommons "S3_DEFAULT_HOSTNAME=s3.amazonaws.com;S3_AUTH_FILE=/var/lib/irods/.ssh/irods-s3-resource-1.keypair;S3_RETRY_COUNT=10;S3_WAIT_TIME_SEC=10;S3_PROTO=HTTPS;S3_ENABLE_MPU=1;S3_ENABLE_ROLE_ASSUMPTION=1;S3_ASSUME_ROLE_FILE=/etc/irods/irods-s3-arn.config"
+
+Note the new flags: S3_ENABLE_ROLE_ASSUMPTION=1 tells the driver that this resource will use the ARN functionality. The 3_ASSUME_ROLE_FILE=/etc/irods/irods-s3-arn.config tells the driver where to find the ARN specific configuration for the resource. This configuration file has two lines: the first is the ARN info and the second is the max duration of new session in seconds. Here's an example file:
+
+arn:aws:iam::xxxxxxxxxxxx:role/new_role 
+900
+
+where the string of x is replaced by the new role id and the string new_role is replaced by the role to be assumed.
+
 Using this plugin with Google Cloud services
 --------------------------------------------
 
