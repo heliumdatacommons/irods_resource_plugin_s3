@@ -45,10 +45,21 @@ Using this plugin with the AWS assume role (ARN) functionality (AWS only)
 
 AWS allows a resource owner to provide access to objects in a bucket by mapping account numbers to each other using STS acces policies.  Once these policies are in place one user can access objects from another account. For a specific example of this see https://docs.google.com/document/d/1z_WZFmc2mqPqF5hAadB1a3Nhw4dn9-c47XxIjR5-SDw.  The iRODS s3 driver has been enhanced to take advantage of this functionality. To use this functionality, follow these steps:
 
+* If you are using Ubuntu 16, you can simply install the binaries from GitHub. The steps for this are:
+
+* git clone https://github.com/heliumdatacommons/irods_resource_plugin_s3.git
+* cd download dir/dist/xenial
+* as root, copy the 2 .so files to /usr/local/lib: sudo cp *.so /usr/local/lib
+* as root, install the driver:  sudo dpkg -i irods-resource-plugin-s3_2.3.0~xenial_amd64.deb
+* Continue to the configuration section
+
 * Download or build the AWS SDK. The package should be part of the irods externals repository. If not, see below.
 * Download the S3 driver from the helium repo: git clone https://github.com/heliumdatacommons/irods_resource_plugin_s3.git. You'll also need all of the iRODS externals and the development package.
 * Build the package: cd download dir; mkdir build && cd build; /opt/irods-externals/clang3.8-0/bin/clang/cmake -DCMAKE_C_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang -DCMAKE_CXX_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang++ -DCMAKE_CXX_FLAGS=-std=c++14 -DUSING_AWS_SDK_CPP:boolean=true ..; make package
 * install the package using rpm or dpkg as appropriate
+
+Configuration
+--------------------------------------------
 * Configure a compound resource to access the target bucket.  Here's an example of how to configure the archive resource
 
 iadmin mkresc AWSCloudArchive-ARN-test s3 ip-172-31-43-128.ec2.internal:nih-nhgri-datacommons "S3_DEFAULT_HOSTNAME=s3.amazonaws.com;S3_AUTH_FILE=/var/lib/irods/.ssh/irods-s3-resource-1.keypair;S3_RETRY_COUNT=10;S3_WAIT_TIME_SEC=10;S3_PROTO=HTTPS;S3_ENABLE_MPU=1;S3_ENABLE_ROLE_ASSUMPTION=1;S3_ASSUME_ROLE_FILE=/etc/irods/irods-s3-arn.config"
@@ -59,6 +70,8 @@ arn:aws:iam::xxxxxxxxxxxx:role/new_role
 900
 
 where the string of x is replaced by the new role id and the string new_role is replaced by the role to be assumed.
+
+The archive and compound resource configurations are unchanged.
 
 Building the AWS SDK
 --------------------------------------------
