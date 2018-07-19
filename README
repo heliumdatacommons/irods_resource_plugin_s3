@@ -45,8 +45,8 @@ Using this plugin with the AWS assume role (ARN) functionality (AWS only)
 
 AWS allows a resource owner to provide access to objects in a bucket by mapping account numbers to each other using STS acces policies.  Once these policies are in place one user can access objects from another account. For a specific example of this see https://docs.google.com/document/d/1z_WZFmc2mqPqF5hAadB1a3Nhw4dn9-c47XxIjR5-SDw.  The iRODS s3 driver has been enhanced to take advantage of this functionality. To use this functionality, follow these steps:
 
-* Download or build the AWS SDK. The package should be part of the irods externals repository.
-* Download the S3 driver from the helium repo: git clone https://github.com/heliumdatacommons/irods_resource_plugin_s3.git
+* Download or build the AWS SDK. The package should be part of the irods externals repository. If not, see below.
+* Download the S3 driver from the helium repo: git clone https://github.com/heliumdatacommons/irods_resource_plugin_s3.git. You'll also need all of the iRODS externals and the development package.
 * Build the package: cd download dir; mkdir build && cd build; /opt/irods-externals/clang3.8-0/bin/clang/cmake -DCMAKE_C_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang -DCMAKE_CXX_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang++ -DCMAKE_CXX_FLAGS=-std=c++14 -DUSING_AWS_SDK_CPP:boolean=true ..; make package
 * install the package using rpm or dpkg as appropriate
 * Configure a compound resource to access the target bucket.  Here's an example of how to configure the archive resource
@@ -59,6 +59,21 @@ arn:aws:iam::xxxxxxxxxxxx:role/new_role
 900
 
 where the string of x is replaced by the new role id and the string new_role is replaced by the role to be assumed.
+
+Building the AWS SDK
+--------------------------------------------
+Download the SDK from Github with git clone https://github.com/aws/aws-sdk-cpp.git,  You'll also need all of the iRODS externals and the development package.
+
+Add these lines to the CMakeLists.txt file
+#RENCI
+include_directories(BEFORE SYSTEM /opt/irods-externals/clang3.8-0/include/c++/v1)
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++")
+link_directories(/opt/irods-externals/clang-runtime3.8-0/lib)
+link_libraries(-lc++)
+
+Build the SDK: cd download dir; mkdir build && cd build; /opt/irods-externals/clang3.8-0/bin/clang/cmake -DCMAKE_C_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang -DCMAKE_CXX_COMPILER=/opt/irods-externals/clang3.8-0/bin/clang++ -DCMAKE_CXX_FLAGS=-std=c++14  ..
+
+This is a big build, so we just want to make and install the pieces we need. So cd to the aws-cpp-sdk-core directory and type make. Then cd ../aws-cpp-sdk-sts and type make.  Install libaws-cpp-sdk-sts.so and libaws-cpp-sdk-core.so in /usr/local/lib (Ubuntu) or /usr/local/lib64 (Centos).
 
 Using this plugin with Google Cloud services
 --------------------------------------------
