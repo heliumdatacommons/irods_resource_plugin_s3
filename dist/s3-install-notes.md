@@ -75,14 +75,12 @@ Make the compound resource
 iadmin mkresc AWSCloudParent-ARN-test compound
 ```
 
-Make the cache resource on the local file system. Note that we add .ec2.internal to the hostname,
+Make the cache resource on the local file system. Note that we add .ec2.internal to the hostname. That's because this iRODS instance is only running locally. In order to add this resource to an external zone, such as the commonssharetest zone, make sure the iRODS consumer is configured with an externally visible fully qualifed domain name and use that to configure the unixfilesystem and archive resources.
 ```
 iadmin mkresc AWSCloudCache-ARN-test unixfilesystem ip-172-31-27-229.ec2.internal:/var/lib/irods/AWSVaults
 ```
 
-Make the archive resource that points to the NIH bucket. Note that we add .ec2.internal to the hostname. We also
- switch on role assumption with S3_ENABLE_ROLE_ASSUMPTION=1 and specify the name of the file with the ARN information
- that we created above using S3_ASSUME_ROLE_FILE=/etc/irods/irods-s3-arn.config
+Make the archive resource that points to the NIH bucket. We also switch on role assumption with S3_ENABLE_ROLE_ASSUMPTION=1 and specify the name of the file with the ARN information that we created above using S3_ASSUME_ROLE_FILE=/etc/irods/irods-s3-arn.config
 ```
 iadmin mkresc AWSCloudArchive-ARN-test s3 ip-172-31-27-229.ec2.internal:nih-nhgri-datacommons "S3_DEFAULT_HOSTNAME=s3.amazonaws.com;S3_AUTH_FILE=/var/lib/irods/.ssh/irods-s3-resource-1.keypair;S3_RETRY_COUNT=10;S3_WAIT_TIME_SEC=10;S3_PROTO=HTTPS;S3_ENABLE_MPU=1;S3_ENABLE_ROLE_ASSUMPTION=1;S3_ASSUME_ROLE_FILE=/etc/irods/irods-s3-arn.config"
 ```
@@ -93,6 +91,8 @@ iadmin addchildtoresc AWSCloudParent-ARN-test AWSCloudCache-ARN-test cache
 iadmin addchildtoresc AWSCloudParent-ARN-test AWSCloudArchive-ARN-test archive
 ```
 
+# End of S3 plugin configuration
+# Start of S3 plugin test
 Register the NIH hello world file
 ```
 ireg -R AWSCloudArchive-ARN-test /nih-nhgri-datacommons/helloworld.txt /tempZone/home/rods/helloworld.txt
