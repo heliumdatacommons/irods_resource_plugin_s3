@@ -461,15 +461,14 @@ irods::error readS3AuthInfo (
                 }
             }
         }
-        if ((result = ASSERT_ERROR(linecnt == 2, SYS_CONFIG_FILE_ERR, "Read %d lines in the auth file. Expected 2.",
-                                   linecnt)).ok())  {
+        if ((result = ASSERT_ERROR(linecnt == 2, SYS_CONFIG_FILE_ERR, "Read %d lines in the auth file \"%s\". Expected 2.",
+                                   linecnt)).ok(), _filename.c_str()) {
             _rtn_key_id = access_key_id;
             _rtn_access_key = secret_access_key;
         }
         return result;
     }
 
-    result = ERROR( SYS_CONFIG_FILE_ERR, "Unknown error in authorization file." );
     return result;
 }
 
@@ -501,6 +500,13 @@ irods::error s3ReadAuthInfo(
                     result = ASSERT_PASS(ret, "Failed to set the \"%s\" property.", s3_access_key.c_str());
                 }
             }
+        }
+        if ( !result.ok() ) {
+            std::string resc_name, resc_host;
+            _prop_map.get<std::string>( irods::RESOURCE_NAME, resc_name );
+            _prop_map.get<std::string>( irods::RESOURCE_LOCATION, resc_host );
+            rodsLog( LOG_NOTICE, "Failure reading S3 auth file [%s] for resource [%s] on host [%s]",
+                    auth_file.c_str(), resc_name.c_str(), resc_host.c_str() );
         }
     }
     return result;
@@ -1792,6 +1798,11 @@ irods::error s3GetAuthCredentials(
     std::string key_id;
     std::string access_key;
 
+    ret = s3ReadAuthInfo( _prop_map );
+    if ( !ret.ok() ) {
+        return PASS( ret );
+    }
+
     ret = _prop_map.get<std::string>(s3_key_id, key_id);
     if((result = ASSERT_PASS(ret, "Failed to get the S3 access key id property.")).ok()) {
 
@@ -1835,15 +1846,19 @@ irods::error s3AssumeRole(irods::plugin_property_map& _prop_map) {
     int          duration_seconds; 
     std::string::size_type sz;
 
-    ret = _prop_map.get< std::string >( s3_key_id, original_key );
-    if (!ret.ok()) {
-       return PASS(ret);
+    ret = s3GetAuthCredentials( _prop_map, original_key, original_secret );
+    if ( !ret.ok() ) {
+        return PASS( ret );
     }
-
-    ret = _prop_map.get< std::string >( s3_access_key, original_secret );
-    if (!ret.ok()) {
-       return PASS(ret);
-    }
+//    //ret = _prop_map.get< std::string >( s3_key_id, original_key );
+//    //if (!ret.ok()) {
+//    //   return PASS(ret);
+//    }
+//
+//    ret = _prop_map.get< std::string >( s3_access_key, original_secret );
+//    if (!ret.ok()) {
+//       return PASS(ret);
+//    }
     
     ret = _prop_map.get< std::string >( s3_arn_id, arn_string );
     if (!ret.ok()) {
@@ -1940,11 +1955,11 @@ irods:: error s3StartOperation(irods::plugin_property_map& _prop_map)
     // an open issue regarding iRODS connection reuse with the option to use
     // another S3 resource which will cause an error.
     // Retrieve the auth info and set the appropriate fields in the property map
-    ret = s3ReadAuthInfo(_prop_map);
-    result = ASSERT_PASS(ret, "Failed to read S3 auth info.");
-    if (!ret.ok()) {
-       return PASS(ret);
-    }
+//    ret = s3ReadAuthInfo(_prop_map);
+//    result = ASSERT_PASS(ret, "Failed to read S3 auth info.");
+//    if (!ret.ok()) {
+//       return PASS(ret);
+//    }
 
 #ifdef USING_AWS_SDK_CPP
     // Are we assuming a role?
