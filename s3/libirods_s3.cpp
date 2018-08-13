@@ -974,13 +974,15 @@ irods::error s3GetFile(
                 bucketContext.accessKeyId = _key_id.c_str();
                 bucketContext.secretAccessKey = _access_key.c_str();
 #ifdef USING_AWS_SDK_CPP
-                std::string arn_session_token;
-                ret = _prop_map.get< std::string >( s3_arn_token, arn_session_token );
-                if (!ret.ok()) {
-                   return PASS(ret);
+                if (s3GetEnableAWSAssumeRole(_prop_map)) {
+                   std::string arn_session_token;
+                   ret = _prop_map.get< std::string >( s3_arn_token, arn_session_token );
+                   if (!ret.ok()) {
+                      return PASS(ret);
+                   }
+                   rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
+                   bucketContext.securityToken =  arn_session_token.c_str();
                 }
-                rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
-                bucketContext.securityToken =  arn_session_token.c_str();
 #endif
 
                 long chunksize = s3GetMPUChunksize( _prop_map );
@@ -1404,13 +1406,15 @@ irods::error s3PutCopyFile(
                 bucketContext.accessKeyId = _key_id.c_str();
                 bucketContext.secretAccessKey = _access_key.c_str();
 #ifdef USING_AWS_SDK_CPP
-                std::string arn_session_token;
-                ret = _prop_map.get< std::string >( s3_arn_token, arn_session_token );
-                if (!ret.ok()) {
-                   return PASS(ret);
+                if (s3GetEnableAWSAssumeRole(_prop_map)) {
+                   std::string arn_session_token;
+                   ret = _prop_map.get< std::string >( s3_arn_token, arn_session_token );
+                   if (!ret.ok()) {
+                      return PASS(ret);
+                   }
+                   rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
+                   bucketContext.securityToken =  arn_session_token.c_str();
                 }
-                rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
-                bucketContext.securityToken =  arn_session_token.c_str();
 #endif
 
 
@@ -1565,13 +1569,15 @@ irods::error s3PutCopyFile(
                         srcBucketContext.accessKeyId = _key_id.c_str();
                         srcBucketContext.secretAccessKey = _access_key.c_str();
 #ifdef USING_AWS_SDK_CPP
-                        std::string arn_session_token;
-                        ret = _prop_map.get< std::string >( s3_arn_token, arn_session_token );
-                        if (!ret.ok()) {
-                           return PASS(ret);
+                        if (s3GetEnableAWSAssumeRole(_prop_map)) {
+                           std::string arn_session_token;
+                           ret = _prop_map.get< std::string >( s3_arn_token, arn_session_token );
+                           if (!ret.ok()) {
+                              return PASS(ret);
+                           }
+                           rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
+                           bucketContext.securityToken =  arn_session_token.c_str();
                         }
-                        rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
-                        bucketContext.securityToken =  arn_session_token.c_str();
 #endif
                     }
 
@@ -1745,13 +1751,15 @@ irods::error s3CopyFile(
                 bucketContext.accessKeyId = _key_id.c_str();
                 bucketContext.secretAccessKey = _access_key.c_str();
 #ifdef USING_AWS_SDK_CPP
-                std::string arn_session_token;
-                ret = _src_ctx.prop_map().get< std::string >( s3_arn_token, arn_session_token );
-                if (!ret.ok()) {
-                   return PASS(ret);
+                if (s3GetEnableAWSAssumeRole(_src_ctx.prop_map())) {
+                   std::string arn_session_token;
+                   ret = _src_ctx.prop_map().get< std::string >( s3_arn_token, arn_session_token );
+                   if (!ret.ok()) {
+                      return PASS(ret);
+                   }
+                   rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
+                   bucketContext.securityToken =  arn_session_token.c_str();
                 }
-                rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
-                bucketContext.securityToken =  arn_session_token.c_str();
 #endif
 
                 S3ResponseHandler responseHandler = {
@@ -1870,13 +1878,13 @@ irods::error s3AssumeRole(irods::plugin_property_map& _prop_map) {
        return PASS(ret);
     }
 
-    rodsLog( LOG_ERROR, "original_key: %s", original_key.c_str());
-    rodsLog( LOG_ERROR, "original_secret: %s", original_secret.c_str());
-    rodsLog( LOG_ERROR, "arn_string: %s", arn_string.c_str());
-    rodsLog( LOG_ERROR, "duration_string: %s", duration_string.c_str());
+    rodsLog( LOG_NOTICE, "original_key: %s", original_key.c_str());
+    rodsLog( LOG_NOTICE, "original_secret: %s", original_secret.c_str());
+    rodsLog( LOG_NOTICE, "arn_string: %s", arn_string.c_str());
+    rodsLog( LOG_NOTICE, "duration_string: %s", duration_string.c_str());
 
     duration_seconds = std::stoi (duration_string,&sz);
-    rodsLog( LOG_ERROR, "duration_seconds: %d", duration_seconds);
+    rodsLog( LOG_NOTICE, "duration_seconds: %d", duration_seconds);
 	Aws::SDKOptions options;
 	Aws::InitAPI(options);
 
@@ -1887,14 +1895,11 @@ irods::error s3AssumeRole(irods::plugin_property_map& _prop_map) {
 		// We'll need a credential and a client configurationws::STS::Model::AssumeRole
 		Aws::Auth::AWSCredentials theCredential =  Aws::Auth::AWSCredentials(accessKeyId, accessKeySecret);
 		Aws::Auth::AWSCredentials& theCredRef = theCredential;
-		rodsLog( LOG_ERROR, "After theCredential");
 		Aws::Client::ClientConfiguration theConfig = Aws::Client::ClientConfiguration();
 		Aws::Client::ClientConfiguration& theConfigRef = theConfig;
-		rodsLog( LOG_ERROR, "After theConfig");
 
 		// We'll need a client
 		Aws::STS::STSClient theClient = Aws::STS::STSClient(theCredRef, theConfigRef);
-		rodsLog( LOG_ERROR, "After theClient");
 
 		Aws::STS::Model::AssumeRoleRequest theRequest = Aws::STS::Model::AssumeRoleRequest();
 		Aws::STS::Model::AssumeRoleRequest& theRequestRef = theRequest;
@@ -1904,13 +1909,12 @@ irods::error s3AssumeRole(irods::plugin_property_map& _prop_map) {
 
 		Aws::STS::Model::AssumeRoleOutcome theOutcome = theClient.AssumeRole(theRequestRef);
 		if (theOutcome.IsSuccess()) {
-		  std::cout << "Outcome is success " << '\n';
 
 		  Aws::STS::Model::AssumeRoleResult &theResult = theOutcome.GetResult();
 		  const Aws::STS::Model::Credentials &theCredentials = theResult.GetCredentials();
-          rodsLog( LOG_ERROR, "new access_key: %s", theCredentials.GetAccessKeyId().c_str());
-          rodsLog( LOG_ERROR, "new secret: %s", theCredentials.GetSecretAccessKey().c_str());
-          rodsLog( LOG_ERROR, "session token: %s", theCredentials.GetSessionToken().c_str());
+          rodsLog( LOG_NOTICE, "new access_key: %s", theCredentials.GetAccessKeyId().c_str());
+          rodsLog( LOG_NOTICE, "new secret: %s", theCredentials.GetSecretAccessKey().c_str());
+          rodsLog( LOG_NOTICE, "session token: %s", theCredentials.GetSessionToken().c_str());
 
 		  // We are going to reset the s3_key_id and the s3_access_key to the temporary credentials 
 		  // obtained with the AssumeRole call
@@ -2184,13 +2188,15 @@ irods::error s3FileUnlinkPlugin(
     bucketContext.accessKeyId = key_id.c_str();
     bucketContext.secretAccessKey = access_key.c_str();
 #ifdef USING_AWS_SDK_CPP
-    std::string arn_session_token; 
-    ret = _ctx.prop_map().get< std::string >( s3_arn_token, arn_session_token );
-    if (!ret.ok()) {
-       return PASS(ret);
+    if (s3GetEnableAWSAssumeRole(_ctx.prop_map())) {
+       std::string arn_session_token; 
+       ret = _ctx.prop_map().get< std::string >( s3_arn_token, arn_session_token );
+       if (!ret.ok()) {
+          return PASS(ret);
+       }
+       rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
+       bucketContext.securityToken =  arn_session_token.c_str();
     }
-    rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
-    bucketContext.securityToken =  arn_session_token.c_str();
 #endif
 
     callback_data_t data;
@@ -2282,13 +2288,15 @@ irods::error s3FileStatPlugin(
                         bucketContext.accessKeyId = key_id.c_str();
                         bucketContext.secretAccessKey = access_key.c_str();
 #ifdef USING_AWS_SDK_CPP
-                        std::string arn_session_token;
-                        ret = _ctx.prop_map().get< std::string >( s3_arn_token, arn_session_token );
-                        if (!ret.ok()) {
-                           return PASS(ret);
+                        if (s3GetEnableAWSAssumeRole(_ctx.prop_map())) {
+                           std::string arn_session_token;
+                           ret = _ctx.prop_map().get< std::string >( s3_arn_token, arn_session_token );
+                           if (!ret.ok()) {
+                              return PASS(ret);
+                           }
+                           rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
+                           bucketContext.securityToken =  arn_session_token.c_str();
                         }
-                        rodsLog( LOG_ERROR, "session token from properties: %s", arn_session_token.c_str());
-                        bucketContext.securityToken =  arn_session_token.c_str();
 #endif
 
                         S3ResponseHandler headObjectHandler = { &responsePropertiesCallback, &responseCompleteCallback };
