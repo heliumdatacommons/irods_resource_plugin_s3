@@ -1988,11 +1988,11 @@ irods:: error s3StartOperation(irods::plugin_property_map& _prop_map)
     // an open issue regarding iRODS connection reuse with the option to use
     // another S3 resource which will cause an error.
     // Retrieve the auth info and set the appropriate fields in the property map
-    ret = s3ReadAuthInfo(_prop_map);
-    result = ASSERT_PASS(ret, "Failed to read S3 auth info.");
-    if (!ret.ok()) {
-       return PASS(ret);
-    }
+    //ret = s3ReadAuthInfo(_prop_map);
+    //result = ASSERT_PASS(ret, "Failed to read S3 auth info.");
+    //if (!ret.ok()) {
+    //   return PASS(ret);
+    //}
 
 #ifdef USING_AWS_SDK_CPP
     // Are we assuming a role?
